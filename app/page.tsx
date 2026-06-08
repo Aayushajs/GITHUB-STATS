@@ -9,13 +9,22 @@ const ENDPOINTS: { id: string; label: string }[] = [
   { id: "activity", label: "Activity" },
 ];
 
+type Health = "checking" | "live" | "setup";
+
 export default function Home() {
-  const [theme, setTheme] = useState("dark");
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [accent, setAccent] = useState("#e3b341");
   const [compact, setCompact] = useState(false);
   const [origin, setOrigin] = useState("");
+  const [health, setHealth] = useState<Health>("checking");
 
-  useEffect(() => setOrigin(window.location.origin), []);
+  useEffect(() => {
+    setOrigin(window.location.origin);
+    fetch("/api/health")
+      .then((r) => r.json())
+      .then((d) => setHealth(d?.ok ? "live" : "setup"))
+      .catch(() => setHealth("setup"));
+  }, []);
 
   const query = useMemo(() => {
     const p = new URLSearchParams();
@@ -27,105 +36,167 @@ export default function Home() {
     return s ? `?${s}` : "";
   }, [theme, accent, compact]);
 
+  const statusText =
+    health === "checking" ? "Connecting" : health === "live" ? "Live" : "Awaiting env";
+
   return (
-    <main style={S.main}>
-      <header style={S.header}>
-        <div style={S.brandRow}>
-          <span style={{ ...S.dot, background: accent }} />
-          <h1 style={S.h1}>Obsidian</h1>
-          <span style={S.badge}>GitHub Analytics</span>
-        </div>
-        <p style={S.tagline}>
-          Self-hosted, premium SVG cards for your GitHub profile README.
-          Configure once, embed anywhere.
+    <div className="ob-shell">
+      <div className="ob-topbar">
+        <span>
+          <b>Obsidian</b>
+        </span>
+        <span>GitHub Analytics</span>
+        <span>Edition 01 — 2026</span>
+      </div>
+      <hr className="ob-rule" />
+
+      <header className="ob-hero">
+        <p className="ob-eyebrow">Self-hosted · Rendered on the edge</p>
+        <h1 className="ob-wordmark">
+          Obsidian<span className="dot">.</span>
+        </h1>
+        <p className="ob-standfirst">
+          Premium SVG cards for your GitHub profile README — rendered server-side,
+          powered by <em>your</em> token. No third party, no tracking.
         </p>
+        <ul className="ob-spec">
+          <li>GraphQL</li>
+          <li>Edge runtime</li>
+          <li>Vercel-native</li>
+          <li>Free</li>
+          <li>
+            <span
+              className="ob-status"
+              data-state={health === "setup" ? "setup" : "live"}
+            >
+              <span className="pip" />
+              {statusText}
+            </span>
+          </li>
+        </ul>
       </header>
 
-      <section style={S.controls}>
-        <label style={S.control}>
-          <span style={S.controlLabel}>THEME</span>
-          <select
-            value={theme}
-            onChange={(e) => setTheme(e.target.value)}
-            style={S.select}
-          >
-            <option value="dark">dark</option>
-            <option value="light">light</option>
-          </select>
-        </label>
+      <section className="ob-controls" aria-label="Card options">
+        <div className="ob-control">
+          <span className="k">Theme</span>
+          <div className="ob-seg" role="group" aria-label="Theme">
+            <button
+              type="button"
+              aria-pressed={theme === "dark"}
+              onClick={() => setTheme("dark")}
+            >
+              Dark
+            </button>
+            <button
+              type="button"
+              aria-pressed={theme === "light"}
+              onClick={() => setTheme("light")}
+            >
+              Light
+            </button>
+          </div>
+        </div>
 
-        <label style={S.control}>
-          <span style={S.controlLabel}>ACCENT</span>
-          <span style={S.colorWrap}>
+        <div className="ob-control">
+          <span className="k">Accent</span>
+          <span className="ob-color">
             <input
               type="color"
               value={accent}
               onChange={(e) => setAccent(e.target.value)}
-              style={S.color}
+              aria-label="Accent colour"
             />
             <input
+              className="ob-hex"
               value={accent}
               onChange={(e) => setAccent(e.target.value)}
-              style={S.hexInput}
               spellCheck={false}
+              aria-label="Accent hex"
             />
           </span>
-        </label>
+        </div>
 
-        <label style={{ ...S.control, flexDirection: "row", alignItems: "center", gap: 8 }}>
-          <input
-            type="checkbox"
-            checked={compact}
-            onChange={(e) => setCompact(e.target.checked)}
-          />
-          <span style={S.controlLabel}>COMPACT</span>
-        </label>
+        <div className="ob-control">
+          <span className="k">Compact</span>
+          <label className="ob-toggle">
+            <input
+              type="checkbox"
+              checked={compact}
+              onChange={(e) => setCompact(e.target.checked)}
+              aria-label="Compact mode"
+            />
+            <span className="track" />
+            <span className="thumb" />
+          </label>
+        </div>
       </section>
 
-      <section style={S.grid}>
-        {ENDPOINTS.map((ep) => {
+      <ol className="ob-cards">
+        {ENDPOINTS.map((ep, i) => {
           const path = `/api/${ep.id}${query}`;
           const md = `![${ep.label}](${origin || "https://YOUR-APP.vercel.app"}${path})`;
           return (
-            <article key={ep.id} style={S.card}>
-              <div style={S.cardHead}>
-                <h2 style={S.cardTitle}>{ep.label}</h2>
-                <code style={S.endpoint}>/api/{ep.id}</code>
+            <li className="ob-card" key={ep.id}>
+              <div className="ob-card-num">{String(i + 1).padStart(2, "0")}</div>
+              <div className="ob-card-head">
+                <h2 className="ob-card-title">{ep.label}</h2>
+                <span className="ob-card-endpoint">
+                  <span className="slash">/</span>api
+                  <span className="slash">/</span>
+                  {ep.id}
+                </span>
               </div>
-              <div style={S.preview}>
+              <div className="ob-preview">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={path} alt={`${ep.label} card`} style={S.img} />
+                <img src={path} alt={`${ep.label} card preview`} />
               </div>
-              <CopyField text={md} />
-            </article>
+              <Snippet text={md} />
+            </li>
           );
         })}
-      </section>
+      </ol>
 
-      <footer style={S.footer}>
-        <p>
-          Set <code style={S.inlineCode}>GITHUB_TOKEN</code> and{" "}
-          <code style={S.inlineCode}>GITHUB_USERNAME</code> in your environment.
-          See <code style={S.inlineCode}>.env.example</code> and the README for
-          deployment.
-        </p>
+      <footer className="ob-colophon">
+        <div>
+          <h3>Setup</h3>
+          <p>
+            Set <code>GITHUB_TOKEN</code> and <code>GITHUB_USERNAME</code> in
+            your environment — locally in <code>.env.local</code>, or in Vercel
+            project settings.
+          </p>
+        </div>
+        <div>
+          <h3>Token scopes</h3>
+          <p>
+            <code>read:user</code> · <code>repo</code> · <code>read:org</code>
+          </p>
+        </div>
+        <div>
+          <h3>Colophon</h3>
+          <p className="ob-sign">
+            Set in Fraunces &amp; IBM&nbsp;Plex&nbsp;Mono.
+            <br />
+            Rendered on the edge.
+          </p>
+        </div>
       </footer>
-    </main>
+    </div>
   );
 }
 
-function CopyField({ text }: { text: string }) {
+function Snippet({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
   return (
-    <div style={S.copyRow}>
-      <code style={S.copyText}>{text}</code>
+    <div className="ob-snippet">
+      <code>{text}</code>
       <button
-        style={S.copyBtn}
+        className="ob-copy"
+        data-copied={copied}
         onClick={async () => {
           try {
             await navigator.clipboard.writeText(text);
             setCopied(true);
-            setTimeout(() => setCopied(false), 1200);
+            setTimeout(() => setCopied(false), 1300);
           } catch {
             /* clipboard unavailable */
           }
@@ -136,107 +207,3 @@ function CopyField({ text }: { text: string }) {
     </div>
   );
 }
-
-const S: Record<string, React.CSSProperties> = {
-  main: {
-    maxWidth: 980,
-    margin: "0 auto",
-    padding: "56px 24px 80px",
-  },
-  header: { marginBottom: 32 },
-  brandRow: { display: "flex", alignItems: "center", gap: 12 },
-  dot: { width: 12, height: 12, borderRadius: 99, boxShadow: "0 0 16px var(--accent)" },
-  h1: { margin: 0, fontSize: 30, letterSpacing: "-0.01em", fontWeight: 800 },
-  badge: {
-    fontSize: 11,
-    letterSpacing: "0.14em",
-    color: "var(--muted)",
-    border: "1px solid var(--line)",
-    borderRadius: 99,
-    padding: "4px 10px",
-    textTransform: "uppercase",
-  },
-  tagline: { color: "var(--muted)", marginTop: 12, maxWidth: 560, lineHeight: 1.6 },
-  controls: {
-    display: "flex",
-    gap: 24,
-    alignItems: "flex-end",
-    flexWrap: "wrap",
-    padding: "18px 20px",
-    border: "1px solid var(--line)",
-    borderRadius: 14,
-    background: "var(--panel)",
-    marginBottom: 28,
-  },
-  control: { display: "flex", flexDirection: "column", gap: 8 },
-  controlLabel: { fontSize: 10.5, letterSpacing: "0.12em", color: "var(--muted)", fontWeight: 600 },
-  select: {
-    background: "var(--bg)",
-    color: "var(--text)",
-    border: "1px solid var(--line)",
-    borderRadius: 8,
-    padding: "8px 10px",
-    fontSize: 14,
-  },
-  colorWrap: { display: "flex", gap: 8, alignItems: "center" },
-  color: { width: 36, height: 36, border: "1px solid var(--line)", borderRadius: 8, background: "transparent", padding: 2 },
-  hexInput: {
-    background: "var(--bg)",
-    color: "var(--text)",
-    border: "1px solid var(--line)",
-    borderRadius: 8,
-    padding: "8px 10px",
-    width: 100,
-    fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
-    fontSize: 13,
-  },
-  grid: { display: "grid", gridTemplateColumns: "1fr", gap: 20 },
-  card: {
-    border: "1px solid var(--line)",
-    borderRadius: 16,
-    background: "var(--panel)",
-    padding: 18,
-  },
-  cardHead: { display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 14 },
-  cardTitle: { margin: 0, fontSize: 16, fontWeight: 700 },
-  endpoint: { color: "var(--muted)", fontSize: 12, fontFamily: "ui-monospace, monospace" },
-  preview: {
-    display: "flex",
-    justifyContent: "center",
-    padding: "10px 0 16px",
-    overflowX: "auto",
-  },
-  img: { maxWidth: "100%" },
-  copyRow: { display: "flex", gap: 8, alignItems: "stretch" },
-  copyText: {
-    flex: 1,
-    overflowX: "auto",
-    whiteSpace: "nowrap",
-    background: "var(--bg)",
-    border: "1px solid var(--line)",
-    borderRadius: 8,
-    padding: "10px 12px",
-    fontSize: 12.5,
-    fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
-    color: "var(--muted)",
-  },
-  copyBtn: {
-    background: "var(--accent)",
-    color: "#0b0e14",
-    border: "none",
-    borderRadius: 8,
-    padding: "0 16px",
-    fontWeight: 700,
-    fontSize: 13,
-    cursor: "pointer",
-  },
-  footer: { marginTop: 40, color: "var(--muted)", fontSize: 13, lineHeight: 1.7 },
-  inlineCode: {
-    fontFamily: "ui-monospace, monospace",
-    background: "var(--bg)",
-    border: "1px solid var(--line)",
-    borderRadius: 6,
-    padding: "2px 6px",
-    fontSize: 12,
-  },
-};
