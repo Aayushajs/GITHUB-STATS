@@ -10,6 +10,7 @@ export interface CardParams {
   compact: boolean;
   hide: string[];
   username?: string;
+  mock: boolean;
 }
 
 const THEME_ENUM = new Set(["dark", "light"]);
@@ -38,5 +39,6 @@ export function parseParams(sp: URLSearchParams): CardParams {
       .map((s) => s.trim().toLowerCase())
       .filter(Boolean),
     username: username && USERNAME.test(username) ? username : undefined,
+    mock: sp.get("mock") === "true",
   };
 }

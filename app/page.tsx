@@ -133,24 +133,26 @@ export default function Home() {
 
       <ol className="ob-cards">
         {ENDPOINTS.map((ep, i) => {
-          const path = `/api/${ep.id}${query}`;
+          const path = `/api/${ep.id}${query}${query ? "&" : "?"}mock=true`;
           const md = `![${ep.label}](${origin || "https://YOUR-APP.vercel.app"}${path})`;
           return (
             <li className="ob-card" key={ep.id}>
-              <div className="ob-card-num">{String(i + 1).padStart(2, "0")}</div>
-              <div className="ob-card-head">
-                <h2 className="ob-card-title">{ep.label}</h2>
-                <span className="ob-card-endpoint">
-                  <span className="slash">/</span>api
-                  <span className="slash">/</span>
-                  {ep.id}
-                </span>
+              <div className="ob-card-meta">
+                <div className="ob-card-num">{String(i + 1).padStart(2, "0")}</div>
+                <div className="ob-card-head">
+                  <h2 className="ob-card-title">{ep.label}</h2>
+                  <span className="ob-card-endpoint">
+                    <span className="slash">/</span>api
+                    <span className="slash">/</span>
+                    {ep.id}
+                  </span>
+                </div>
+                <Snippet text={md} />
               </div>
               <div className="ob-preview">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={path} alt={`${ep.label} card preview`} />
               </div>
-              <Snippet text={md} />
             </li>
           );
         })}
