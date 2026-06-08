@@ -58,12 +58,19 @@ export function renderStatsCard(
 
   // Public/private breakdown only when there's a private figure to show — avoids
   // a confusing "0 private" and avoids mislabelling a merged calendar as "public".
-  const breakdown = hasPrivate
-    ? `<text x="${right}" y="84" text-anchor="end" class="sub"><tspan style="fill:${theme.text};font-weight:700">${fmt(stats.publicContributions)}</tspan> public</text>
-  <text x="${right}" y="106" text-anchor="end" class="sub"><tspan style="fill:${theme.accent};font-weight:700">${fmt(stats.privateContributions)}</tspan> private</text>`
-    : "";
+  // Top-right always carries a balanced two-line summary: the public/private
+  // split when private data is available, otherwise this-year + streak.
+  const lastYear = stats.calendar.slice(-365).reduce((s, d) => s + d.count, 0);
+  const line = (y: number, value: string, label: string, accent = false): string =>
+    `<text x="${right}" y="${y}" text-anchor="end" class="sub"><tspan style="fill:${accent ? theme.accent : theme.text};font-weight:700">${value}</tspan> ${label}</text>`;
 
-  const heroLabel = hasPrivate ? "Total Contributions" : "Contributions";
+  const breakdown = hasPrivate
+    ? line(84, fmt(stats.publicContributions), "public") +
+      line(106, fmt(stats.privateContributions), "private", true)
+    : line(84, fmt(lastYear), "this year") +
+      line(106, fmt(stats.currentStreak.length), "day streak");
+
+  const heroLabel = "Total Contributions";
 
   const body = `
   <text x="${P}" y="38" class="title">${escapeXml(display)}</text>
