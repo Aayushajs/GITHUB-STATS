@@ -111,34 +111,39 @@ export function svgDocument(o: DocumentOptions): string {
       <stop offset="0" stop-color="#ffffff" stop-opacity="0.10"/>
       <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
     </linearGradient>
+    <radialGradient id="glow" cx="85%" cy="15%" r="60%">
+      <stop offset="0" stop-color="${theme.accent}" stop-opacity="0.18"/>
+      <stop offset="0.6" stop-color="${theme.accent}" stop-opacity="0.03"/>
+      <stop offset="1" stop-color="${theme.accent}" stop-opacity="0"/>
+    </radialGradient>
     ${o.defs ?? ""}
   </defs>
   <style>
-    .frame{}
     text{font-family:${FONT};}
-    .lbl{fill:${theme.muted};font-size:10.5px;font-weight:600;letter-spacing:0.12em;}
-    .num{fill:${theme.text};font-weight:700;font-variant-numeric:tabular-nums;}
+    .lbl{fill:${theme.muted};font-size:9.5px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;}
+    .num{fill:${theme.text};font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-0.02em;}
     .sub{fill:${theme.muted};font-size:11px;font-weight:500;}
-    .title{fill:${theme.text};font-size:15px;font-weight:700;letter-spacing:0.01em;}
+    .title{fill:${theme.text};font-size:15px;font-weight:800;letter-spacing:-0.01em;}
     .accent{fill:${theme.accent};}
-    @keyframes rise{from{opacity:0;transform:translateY(7px);}to{opacity:1;transform:translateY(0);}}
-    @keyframes pop{from{opacity:0;transform:scale(0.7);}to{opacity:1;transform:scale(1);}}
+    .panel{fill:${theme.panel};stroke:${theme.border};stroke-width:1;}
+    .panel-hi{fill:none;stroke:rgba(255,255,255,0.06);stroke-width:1;}
+    @keyframes rise{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+    @keyframes pop{from{opacity:0;transform:scale(0.85);}to{opacity:1;transform:scale(1);}}
     @keyframes draw{to{stroke-dashoffset:0;}}
-    @keyframes flick{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.85;transform:scale(1.05);}}
-    /* Animations are a progressive enhancement: content is fully visible by
-       default (and for reduced-motion users / non-animating renderers). It only
-       starts hidden + animates when motion is explicitly welcome. */
+    @keyframes flick{0%,100%{opacity:0.95;transform:scale(1);}50%{opacity:0.75;transform:scale(1.06);}}
+    /* Animations are a progressive enhancement */
     @media (prefers-reduced-motion: no-preference){
-      .rise{opacity:0;animation:rise .55s cubic-bezier(.2,.7,.2,1) forwards;}
-      .cell{opacity:0;animation:pop .45s ease forwards;transform-box:fill-box;transform-origin:center;}
-      .anim-draw{stroke-dasharray:var(--dash);stroke-dashoffset:var(--dash);animation:draw 1.3s ease .15s forwards;}
-      .flame{transform-box:fill-box;transform-origin:center bottom;animation:flick 2.4s ease-in-out infinite;}
+      .rise{opacity:0;animation:rise .6s cubic-bezier(.16,1,.3,1) forwards;}
+      .cell{opacity:0;animation:pop .4s cubic-bezier(.34,1.56,0.64,1) forwards;transform-box:fill-box;transform-origin:center;}
+      .anim-draw{stroke-dasharray:var(--dash);stroke-dashoffset:var(--dash);animation:draw 1.4s cubic-bezier(.22,1,.36,1) .15s forwards;}
+      .flame{transform-box:fill-box;transform-origin:center bottom;animation:flick 2.0s ease-in-out infinite;}
     }
     ${o.styles ?? ""}
   </style>
   <rect x="0.5" y="0.5" width="${width - 1}" height="${height - 1}" rx="${r}" fill="url(#bg)" ${
     theme.hideBorder ? "" : `stroke="${theme.border}"`
   }/>
+  <rect x="0.5" y="0.5" width="${width - 1}" height="${height - 1}" rx="${r}" fill="url(#glow)"/>
   <rect x="0.5" y="0.5" width="${width - 1}" height="${Math.min(height - 1, r + 12)}" rx="${r}" fill="url(#hi)"/>
   ${body}
 </svg>`;

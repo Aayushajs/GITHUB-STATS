@@ -16,13 +16,11 @@ export function renderActivityCard(
   const n = counts.length;
   const maxV = Math.max(1, ...counts);
 
-  // Graph geometry.
   const gx0 = P;
   const gx1 = right;
-  const gyBottom = 126;
-  const gyTop = 68;
-  const innerW = gx1 - gx0;
-  const step = n > 1 ? innerW / (n - 1) : 0;
+  const gyBottom = 122;
+  const gyTop = 66;
+  const step = n > 1 ? (gx1 - gx0) / (n - 1) : 0;
   const pointY = (c: number) => gyBottom - (c / maxV) * (gyBottom - gyTop);
 
   const pts = counts.map((c, i) => [gx0 + i * step, pointY(c)] as const);
@@ -35,30 +33,38 @@ export function renderActivityCard(
       : "";
   const lastPt = pts[pts.length - 1];
 
+  const midY = ((gyTop + gyBottom) / 2).toFixed(1);
+  const gridlines = `
+    <line x1="${gx0}" y1="${gyTop}" x2="${gx1}" y2="${gyTop}" stroke="${theme.line}" stroke-dasharray="2 4"/>
+    <line x1="${gx0}" y1="${midY}" x2="${gx1}" y2="${midY}" stroke="${theme.line}" stroke-dasharray="2 4"/>
+    <line x1="${gx0}" y1="${gyBottom}" x2="${gx1}" y2="${gyBottom}" stroke="${theme.line}" stroke-dasharray="2 4"/>`;
+
   const sumLast7 = counts.slice(-7).reduce((s, c) => s + c, 0);
   const avg = (counts.reduce((s, c) => s + c, 0) / Math.max(1, n)).toFixed(1);
   const busiest = Math.max(0, ...counts);
 
-  const metric = (x: number, value: string, label: string, delay: number) => `
+  const metric = (col: number, value: string, label: string, delay: number) => {
+    const x = P + col * 102;
+    return `
     <g class="rise" style="animation-delay:${delay}s">
-      <rect x="${x}" y="156" width="14" height="2.5" rx="1.25" fill="${theme.accent}"/>
-      <text x="${x}" y="178" class="num" font-size="16">${value}</text>
-      <text x="${x}" y="195" class="lbl">${label}</text>
+      <rect x="${x}" y="150" width="16" height="2.5" rx="1.25" fill="${theme.accent}"/>
+      <text x="${x}" y="174" class="num" font-size="17">${value}</text>
+      <text x="${x}" y="192" class="lbl">${label}</text>
     </g>`;
+  };
 
   const defs = `
     <linearGradient id="area" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="${theme.accent}" stop-opacity="0.34"/>
+      <stop offset="0" stop-color="${theme.accent}" stop-opacity="0.28"/>
       <stop offset="1" stop-color="${theme.accent}" stop-opacity="0"/>
     </linearGradient>`;
 
-  const cols = [P, P + 102, P + 204, P + 306];
-
   const body = `
-  <text x="${P}" y="36" class="title">Recent Activity</text>
-  <text x="${right}" y="36" text-anchor="end" class="sub">last 30 days</text>
-  <line x1="${P}" y1="50" x2="${right}" y2="50" stroke="${theme.line}"/>
+  <text x="${P}" y="38" class="title">Recent Activity</text>
+  <text x="${right}" y="38" text-anchor="end" class="sub">last 30 days</text>
+  <line x1="${P}" y1="54" x2="${right}" y2="54" stroke="${theme.line}"/>
 
+  ${gridlines}
   ${areaPath ? `<path d="${areaPath}" fill="url(#area)"/>` : ""}
   ${
     n > 1
@@ -67,11 +73,11 @@ export function renderActivityCard(
   }
   ${lastPt ? `<circle cx="${lastPt[0].toFixed(1)}" cy="${lastPt[1].toFixed(1)}" r="3.5" fill="${theme.accent}" class="cell" style="animation-delay:1.3s"/>` : ""}
 
-  <line x1="${P}" y1="142" x2="${right}" y2="142" stroke="${theme.line}"/>
-  ${metric(cols[0], fmt(sumLast7), "THIS WEEK", 0.06)}
-  ${metric(cols[1], avg, "DAILY AVG", 0.1)}
-  ${metric(cols[2], fmt(busiest), "BUSIEST DAY", 0.14)}
-  ${metric(cols[3], fmt(stats.currentStreak.length), "STREAK", 0.18)}`;
+  <line x1="${P}" y1="138" x2="${right}" y2="138" stroke="${theme.line}"/>
+  ${metric(0, fmt(sumLast7), "This Week", 0.06)}
+  ${metric(1, avg, "Daily Avg", 0.1)}
+  ${metric(2, fmt(busiest), "Busiest Day", 0.14)}
+  ${metric(3, fmt(stats.currentStreak.length), "Streak", 0.18)}`;
 
   return svgDocument({
     width,
